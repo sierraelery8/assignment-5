@@ -14,13 +14,10 @@ app.use(express.json());
 // custom logging middleware
 app.use((req, res, next) => {
   const timestamp = new Date().toISOString();
-
   console.log(`[${timestamp}] ${req.method} ${req.originalUrl}`);
-
   if (req.method === "POST" || req.method === "PUT") {
     console.log("Request Body:", req.body);
   }
-
   next();
 });
 
@@ -125,11 +122,9 @@ app.get("/api/menu", (req, res) => {
 app.get("/api/menu/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const item = menuItems.find(menuItem => menuItem.id === id);
-
   if (!item) {
     return res.status(404).json({ message: "Menu item not found" });
   }
-
   res.status(200).json(item);
 });
 
@@ -140,7 +135,6 @@ app.post("/api/menu", menuValidationRules, validate, (req, res) => {
     available: req.body.available ?? true,
     ...req.body
   };
-
   menuItems.push(newItem);
   res.status(201).json(newItem);
 });
@@ -149,16 +143,13 @@ app.post("/api/menu", menuValidationRules, validate, (req, res) => {
 app.put("/api/menu/:id", menuValidationRules, validate, (req, res) => {
   const id = parseInt(req.params.id);
   const index = menuItems.findIndex(menuItem => menuItem.id === id);
-
   if (index === -1) {
     return res.status(404).json({ message: "Menu item not found" });
   }
-
   menuItems[index] = {
     ...menuItems[index],
     ...req.body
   };
-
   res.status(200).json(menuItems[index]);
 });
 
@@ -166,13 +157,10 @@ app.put("/api/menu/:id", menuValidationRules, validate, (req, res) => {
 app.delete("/api/menu/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const index = menuItems.findIndex(menuItem => menuItem.id === id);
-
   if (index === -1) {
     return res.status(404).json({ message: "Menu item not found" });
   }
-
   const deletedItem = menuItems.splice(index, 1);
-
   res.status(200).json(deletedItem);
 });
 

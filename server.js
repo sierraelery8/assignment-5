@@ -1,9 +1,18 @@
-// Import packages, initialize an express app, and define the port you will use
+// import packages
+const express = require("express");
+
+// initializing the express app
+const app = express();
+
+// defining port
+const PORT = 3000;
+
+// middleware to parse JSON
+app.use(express.json());
 
 
-
-// Data for the server
-const menuItems = [
+// the data for the server
+let menuItems = [
   {
     id: 1,
     name: "Classic Burger",
@@ -60,4 +69,71 @@ const menuItems = [
   }
 ];
 
-// Define routes and implement middleware here
+
+// GET all menu items
+app.get("/api/menu", (req, res) => {
+  res.json(menuItems);
+});
+
+
+// GET menu item by ID
+app.get("/api/menu/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const item = menuItems.find(menuItem => menuItem.id === id);
+
+  if (!item) {
+    return res.status(404).json({ message: "Menu item not found" });
+  }
+
+  res.json(item);
+});
+
+
+// POST new menu item
+app.post("/api/menu", (req, res) => {
+  const newItem = {
+    id: menuItems.length + 1,
+    ...req.body
+  };
+
+  menuItems.push(newItem);
+  res.status(201).json(newItem);
+});
+
+
+// PUT update menu item
+app.put("/api/menu/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const index = menuItems.findIndex(menuItem => menuItem.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ message: "Menu item not found" });
+  }
+
+  menuItems[index] = {
+    ...menuItems[index],
+    ...req.body
+  };
+
+  res.json(menuItems[index]);
+});
+
+
+// DELETE menu item
+app.delete("/api/menu/:id", (req, res) => {
+  const id = parseInt(req.params.id);
+  const index = menuItems.findIndex(menuItem => menuItem.id === id);
+
+  if (index === -1) {
+    return res.status(404).json({ message: "Menu item not found" });
+  }
+
+  const deletedItem = menuItems.splice(index, 1);
+  res.json(deletedItem);
+});
+
+
+// start server
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});

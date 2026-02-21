@@ -1,10 +1,11 @@
 // import packages
 const express = require("express");
+const { body, validationResult } = require("express-validator");
 
-// initializing the express app
+// initialize express app
 const app = express();
 
-// defining port
+// define port
 const PORT = 3000;
 
 // middleware to parse JSON
@@ -16,15 +17,48 @@ app.use((req, res, next) => {
 
   console.log(`[${timestamp}] ${req.method} ${req.originalUrl}`);
 
-  // only log body for POST and PUT
   if (req.method === "POST" || req.method === "PUT") {
     console.log("Request Body:", req.body);
   }
 
-  next(); // move to next middleware/route
+  next();
 });
 
-// the data for the server
+// validation rules
+const menuValidationRules = [
+  body("name")
+    .isString().withMessage("Name must be a string")
+    .isLength({ min: 3 }).withMessage("Name must be at least 3 characters"),
+
+  body("description")
+    .isString().withMessage("Description must be a string")
+    .isLength({ min: 10 }).withMessage("Description must be at least 10 characters"),
+
+  body("price")
+    .isFloat({ gt: 0 }).withMessage("Price must be a number greater than 0"),
+
+  body("category")
+    .isIn(["appetizer", "entree", "dessert", "beverage"])
+    .withMessage("Category must be appetizer, entree, dessert, or beverage"),
+
+  body("ingredients")
+    .isArray({ min: 1 }).withMessage("Ingredients must be an array with at least 1 item"),
+
+  body("available")
+    .optional()
+    .isBoolean().withMessage("Available must be true or false")
+];
+
+// validation error handler
+const validate = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  next();
+};
+
+// data
 let menuItems = [
   {
     id: 1,
@@ -82,14 +116,12 @@ let menuItems = [
   }
 ];
 
-
-// GET all menu items
+// GET all
 app.get("/api/menu", (req, res) => {
-  res.json(menuItems);
+  res.status(200).json(menuItems);
 });
 
-
-// GET menu item by ID
+// GET by ID
 app.get("/api/menu/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const item = menuItems.find(menuItem => menuItem.id === id);
@@ -98,14 +130,14 @@ app.get("/api/menu/:id", (req, res) => {
     return res.status(404).json({ message: "Menu item not found" });
   }
 
-  res.json(item);
+  res.status(200).json(item);
 });
 
-
-// POST new menu item
-app.post("/api/menu", (req, res) => {
+// POST
+app.post("/api/menu", menuValidationRules, validate, (req, res) => {
   const newItem = {
     id: menuItems.length + 1,
+    available: req.body.available ?? true,
     ...req.body
   };
 
@@ -113,9 +145,8 @@ app.post("/api/menu", (req, res) => {
   res.status(201).json(newItem);
 });
 
-
-// PUT update menu item
-app.put("/api/menu/:id", (req, res) => {
+// PUT
+app.put("/api/menu/:id", menuValidationRules, validate, (req, res) => {
   const id = parseInt(req.params.id);
   const index = menuItems.findIndex(menuItem => menuItem.id === id);
 
@@ -128,11 +159,10 @@ app.put("/api/menu/:id", (req, res) => {
     ...req.body
   };
 
-  res.json(menuItems[index]);
+  res.status(200).json(menuItems[index]);
 });
 
-
-// DELETE menu item
+// DELETE
 app.delete("/api/menu/:id", (req, res) => {
   const id = parseInt(req.params.id);
   const index = menuItems.findIndex(menuItem => menuItem.id === id);
@@ -142,9 +172,9 @@ app.delete("/api/menu/:id", (req, res) => {
   }
 
   const deletedItem = menuItems.splice(index, 1);
-  res.json(deletedItem);
-});
 
+  res.status(200).json(deletedItem);
+});
 
 // start server
 app.listen(PORT, () => {
